@@ -1,5 +1,6 @@
 package com.tts.techtalenttwitter.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -9,9 +10,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.tts.techtalenttwitter.model.Tweet;
+import com.tts.techtalenttwitter.model.TweetDisplay;
 import com.tts.techtalenttwitter.model.User;
 import com.tts.techtalenttwitter.service.TweetService;
 import com.tts.techtalenttwitter.service.UserService;
@@ -25,14 +29,36 @@ public class TweetController
 	@Autowired
 	private TweetService tweetService;
 	
-	@GetMapping(value = {"/tweets", "/"})
-	public String getFeed(Model model)
+	@GetMapping(value= {"/tweets", "/"})
+    public String getFeed(@RequestParam(value="filter", required=false) String filter, Model model)
 	{
-		List<Tweet> tweets = tweetService.findAll(); 
-		model.addAttribute("tweetList", tweets);
-		return "feed";
+    	User loggedInUser = userService.getLoggedInUser();
+    	List<TweetDisplay> tweets = new ArrayList<>();
+    	
+    	if (filter == null) {
+    		filter = "all";
+    	}
+    	if (filter.equalsIgnoreCase("following")) 
+    	{
+    		List<User> following = loggedInUser.getFollowing();
+    		tweets = tweetService.findAllByUsers(following);
+    		model.addAttribute("filter", "following");
+    	}
+    	else 
+    	{
+    		tweets = tweetService.findAll();
+    		model.addAttribute("filter", "all");
+    	}
+
+        model.addAttribute("tweetList", tweets);
+        return "feed";
+    }
 		
-	}
+		//List<User> following = user.getFollowing();
+		//List<TweetDisplay> tweets = tweetService.findAll(); 
+		//model.addAttribute("tweetList", tweets);
+		//return "feed";
+		
 	
 	@GetMapping(value = "/tweets/new")
 	public String getTweetForm(Model model)
@@ -54,5 +80,19 @@ public class TweetController
 		}
 		return "newTweet"; 
 	}
+	
+	@GetMapping(value = "/tweets/{tag}")
+	public String getTweetsByTag(@PathVariable(value="tag") String tag, Model model)
+	{
+		List<TweetDisplay> tweets = tweetService.findAllWithTag(tag);
+		model.addAttribute("tweetList", tweets);
+		model.addAttribute("tag", tag); 
+		return "taggedTweets"; 
+	}
+	
+	//anything stored in a model can be used in thymeleaf
+	//"middle man" access variables (between java + front end_
+	//return that we are going to use the template taggedTweets.html
+	//to respond to this request
 
 }
