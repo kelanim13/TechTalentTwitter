@@ -19,7 +19,9 @@
         <div th:if="${not #lists.isEmpty(tweetList)}">   
             <h2>Tweets</h2>
         </div>        
+        
         <div th:replace="fragments/tweet"></div>
+        
         <div th:if="${#lists.isEmpty(tweetList) and filter == 'all'}">
             <h3>No tweets have been created yet</h3>
         </div>
